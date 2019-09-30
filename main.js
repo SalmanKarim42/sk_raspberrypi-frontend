@@ -9,7 +9,8 @@ import {
   Platform,
   AppRegistry,
   YellowBox,
-}                           from "react-native";
+  Alert
+} from "react-native";
 import {
   RTCPeerConnection,
   //RTCMediaStream, /* old API */
@@ -18,12 +19,12 @@ import {
   RTCView,
   MediaStreamTrack,
   getUserMedia,
-}                           from "react-native-webrtc";
-import io                   from "socket.io-client";
+} from "react-native-webrtc";
+import io from "socket.io-client";
 
 
 YellowBox.ignoreWarnings(['Setting a timer', 'Unrecognized WebSocket connection', 'ListView is deprecated and will be removed']);
-const url = 'https://5b137d1b.ngrok.io';
+const url = 'https://dimitristzimikas-rctwebrtcdemo-server.glitch.me';
 const socket = io.connect(url, { transports: ["websocket"] });
 const configuration = {
   iceServers: [{ urls: "stun:stun.l.google.com:19302" }],
@@ -37,22 +38,22 @@ function initStream() {
   getLocalStream(true, function (stream) {
     localStream = stream;
     container.setState({ selfViewSrc: stream.toURL() });
-    container.setState({
-      status: "ready",
-      info: "Please enter or create room ID",
-    });
+    // container.setState({
+    //   status: "ready",
+    //   info: "Please enter or create room ID",
+    // });
   });
 }
 
 function getLocalStream(isFront, callback) {
   let videoSourceId;
-  
+
   // on android, you don't have to specify sourceId manually, just use facingMode
   // uncomment it if you want to specify
   if (Platform.OS === "ios") {
     MediaStreamTrack.getSources(sourceInfos => {
       console.log("sourceInfos: ", sourceInfos);
-      
+
       for (let i = 0; i < sourceInfos.length; i++) {
         const sourceInfo = sourceInfos[i];
         if (
@@ -66,7 +67,7 @@ function getLocalStream(isFront, callback) {
   }
   getUserMedia(
     {
-      audio: false,
+      audio: true,
       video: {
         mandatory: {
           minWidth: 640, // Provide your own width, height and frame rate here
@@ -87,26 +88,36 @@ function getLocalStream(isFront, callback) {
 
 const join = roomID => {
   console.log("join");
-  socket.emit("join", roomID, function (socketIds) {
-    console.log("join", socketIds);
-    for (const i in socketIds) {
-      const socketId = socketIds[i];
-      createPC(socketId, true);
+  socket.emit("joinClient", roomID,
+    // function (socketIds) {
+    //   console.log("join", socketIds);
+    //   for (const i in socketIds) {
+    //     const socketId = socketIds[i];
+    //     createPC(socketId, true);
+    //   }
+    // }
+
+    function (isJoin) {
+      if (isJoin) {
+        container.setState({
+          info: "Connected to Server"
+        })
+      }
     }
-  });
+  );
 };
 
 function createPC(socketId, isOffer) {
   const pc = new RTCPeerConnection(configuration);
   pcPeers[socketId] = pc;
-  
+
   pc.onicecandidate = function (event) {
     console.log("onicecandidate", event.candidate);
     if (event.candidate) {
       socket.emit("exchange", { to: socketId, candidate: event.candidate });
     }
   };
-  
+
   function createOffer() {
     pc.createOffer(function (desc) {
       console.log("createOffer", desc);
@@ -120,14 +131,14 @@ function createPC(socketId, isOffer) {
       );
     }, logError);
   }
-  
+
   pc.onnegotiationneeded = function () {
     console.log("onnegotiationneeded");
     if (isOffer) {
       createOffer();
     }
   };
-  
+
   pc.oniceconnectionstatechange = function (event) {
     console.log("oniceconnectionstatechange", event.target.iceConnectionState);
     if (event.target.iceConnectionState === "completed") {
@@ -142,51 +153,70 @@ function createPC(socketId, isOffer) {
   pc.onsignalingstatechange = function (event) {
     console.log("onsignalingstatechange", event.target.signalingState);
   };
-  
+
   pc.onaddstream = function (event) {
     console.log("onaddstream", event.stream);
-    container.setState({ info: "One peer join!" });
-    
-    const remoteList = container.state.remoteList;
-    remoteList[socketId] = event.stream.toURL();
-    container.setState({ remoteList: remoteList });
+    Alert.alert(socketId, 'Calling you',
+      [
+        {
+          text: 'Cancel',
+          onPress: () => { acceptTheCall(false); console.log('Cancel Pressed') },
+          style: 'cancel',
+        },
+        { text: 'Accept', onPress: () => { acceptTheCall(true); console.log('OK Pressed') } },
+      ])
+    acceptTheCall = (accepted) => {
+      if (accepted) {
+
+        container.setState({ info: "One peer join!", enableHangup: true });
+
+        const remoteList = container.state.remoteList;
+        remoteList[socketId] = event.stream.toURL();
+        container.setState({ remoteList: remoteList });
+      } else {
+        hangup(container.state.roomID);
+      }
+    }
   };
   pc.onremovestream = function (event) {
     console.log("onremovestream", event.stream);
   };
-  
+
   pc.addStream(localStream);
-  
+
   function createDataChannel() {
     if (pc.textDataChannel) {
       return;
     }
     const dataChannel = pc.createDataChannel("text");
-    
+
     dataChannel.onerror = function (error) {
       console.log("dataChannel.onerror", error);
     };
-    
+
     dataChannel.onmessage = function (event) {
       console.log("dataChannel.onmessage:", event.data);
       container.receiveTextData({ user: socketId, message: event.data });
     };
-    
+
     dataChannel.onopen = function () {
       console.log("dataChannel.onopen");
       container.setState({ textRoomConnected: true });
     };
-    
+
     dataChannel.onclose = function () {
       console.log("dataChannel.onclose");
     };
-    
+
     pc.textDataChannel = dataChannel;
   }
-  
+
   return pc;
 }
-
+function hangup(roomID) {
+  socket.emit('hangupclient', roomID);
+  join(roomID);
+}
 function exchange(data) {
   const fromId = data.from;
   let pc;
@@ -195,7 +225,7 @@ function exchange(data) {
   } else {
     pc = createPC(fromId, false);
   }
-  
+
   if (data.sdp) {
     console.log("exchange sdp", data);
     pc.setRemoteDescription(
@@ -225,18 +255,23 @@ function exchange(data) {
     pc.addIceCandidate(new RTCIceCandidate(data.candidate));
   }
 }
-
+function cancel(clientId) {
+  socket.emit('cancelCall', clientId);
+}
 function leave(socketId) {
   console.log("leave", socketId);
   const pc = pcPeers[socketId];
-  const viewIndex = pc.viewIndex;
-  pc.close();
-  delete pcPeers[socketId];
-  
+  // const viewIndex = pc.viewIndex;
+  if (pc) {
+
+    pc.close();
+    delete pcPeers[socketId];
+  }
+
   const remoteList = container.state.remoteList;
   delete remoteList[socketId];
   container.setState({ remoteList: remoteList });
-  container.setState({ info: "One peer leave!" });
+  container.setState({ info: "One peer leave!", enableHangup: false });
 }
 
 socket.on("exchange", function (data) {
@@ -266,9 +301,9 @@ function getStats() {
   const pc = pcPeers[Object.keys(pcPeers)[0]];
   if (pc.getRemoteStreams()[0] && pc.getRemoteStreams()[0].getAudioTracks()[0]) {
     const track = pc.getRemoteStreams()[0].getAudioTracks()[0];
-    
+
     console.log("track", track);
-    
+
     pc.getStats(
       track,
       function (report) {
@@ -282,42 +317,43 @@ function getStats() {
 class RCTWebRTCDemo extends Component {
   constructor(props) {
     super(props);
-    
+
     this.ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 });
   }
-  
+
   state = {
     info: "Initializing",
     status: "init",
-    roomID: "abc",
+    roomID: "raspberrypi",
     isFront: true,
     selfViewSrc: null,
     remoteList: {},
     textRoomConnected: false,
     textRoomData: [],
     textRoomValue: "",
+    enableHangup: false
   };
-  
+
   componentDidMount() {
     container = this;
     initStream();
+    this._press()
   }
-  
+
   _press = () => {
     // console.log("roomID", this.refs.roomID);
     // this.refs.roomID.blur();
     console.log("press", this.state.roomID);
-    this.setState({ status: "connect", info: "Connecting" });
+    this.setState({ status: "connect", info: "Connecting to Raspberrypi server" });
     join(this.state.roomID);
   };
-  
+
   _switchVideoType = () => {
     console.log(!this.state.isFront);
-    
     const isFront = !this.state.isFront;
-    
+
     this.setState({ isFront });
-    
+
     getLocalStream(isFront, function (stream) {
       if (localStream) {
         for (const id in pcPeers) {
@@ -328,20 +364,20 @@ class RCTWebRTCDemo extends Component {
       }
       localStream = stream;
       container.setState({ selfViewSrc: stream.toURL() });
-      
-      for (const id in pcPeers) {
-        const pc = pcPeers[id];
-        pc && pc.addStream(localStream);
-      }
+
+      // for (const id in pcPeers) {
+      //   const pc = pcPeers[id];
+      //   pc && pc.addStream(localStream);
+      // }
     });
   };
-  
+
   receiveTextData = data => {
     const textRoomData = this.state.textRoomData.slice();
     textRoomData.push(data);
     this.setState({ textRoomData, textRoomValue: "" });
   };
-  
+
   _textRoomPress = () => {
     if (!this.state.textRoomValue) {
       return;
@@ -354,7 +390,7 @@ class RCTWebRTCDemo extends Component {
     }
     this.setState({ textRoomData, textRoomValue: "" });
   };
-  
+
   _renderTextRoom = () => {
     return (
       <View style={styles.listViewContainer}>
@@ -378,17 +414,19 @@ class RCTWebRTCDemo extends Component {
       </View>
     );
   };
-  
+
   render() {
     return (
       <View style={styles.container}>
-        
-        <Text style={styles.welcome}>{this.state.info}</Text>
-        
-        <Text>{this.state.roomID}</Text>
-        
+
+        <View style={styles.infoDiv}>
+          <Text style={styles.welcome}>{this.state.info}</Text>
+
+          <Text>{this.state.roomID}</Text>
+        </View>
+
         {/*{this.state.textRoomConnected && this._renderTextRoom()}*/}
-        
+
         {/*{this.state.textRoomConnected && (
          <View style={styles.listViewContainer}>
          <ListView
@@ -410,8 +448,8 @@ class RCTWebRTCDemo extends Component {
          </TouchableHighlight>
          </View>
          )}*/}
-        
-        <View style={{ flexDirection: "row" }}>
+
+        {/* <View style={{ flexDirection: "row" }}>
           <Text>
             {this.state.isFront ? "Use front camera" : "Use back camera"}
           </Text>
@@ -421,9 +459,9 @@ class RCTWebRTCDemo extends Component {
           >
             <Text>Switch camera</Text>
           </TouchableHighlight>
-        </View>
-        
-        {
+        </View> */}
+
+        {/* {
           this.state.status === "ready"
             ?
             (<View>
@@ -445,13 +483,25 @@ class RCTWebRTCDemo extends Component {
             </View>)
             :
             null
-        }
-        <RTCView streamURL={this.state.selfViewSrc} style={styles.selfView}/>
+        } */}
+        {/* <RTCView streamURL={this.state.selfViewSrc} style={styles.selfView} /> */}
         {mapHash(this.state.remoteList, function (remote, index) {
           return (
-            <RTCView key={index} streamURL={remote} style={styles.remoteView}/>
+            <RTCView key={index} streamURL={remote} style={styles.remoteView} />
           );
         })}
+
+        <View style={styles.footerButtons}>
+          {
+            this.state.enableHangup &&
+            <TouchableHighlight style={{
+              width: 100, height: 50, backgroundColor: "blue",
+              justifyContent: 'center', alignItems: 'center'
+            }} onPress={() => { hangup(this.state.roomID) }}>
+              <Text style={{ color: 'white', fontSize: 16, fontWeight: '700' }}>Hangup</Text>
+            </TouchableHighlight>
+          }
+        </View>
       </View>
     );
   }
@@ -463,8 +513,14 @@ const styles = StyleSheet.create({
     height: 150,
   },
   remoteView: {
-    width: 200,
-    height: 150,
+    width: '100%',
+    height: '100%',
+  },
+  infoDiv: {
+    position: 'absolute',
+    top: 0,
+    width: '100%',
+    backgroundColor: "rgba(255,255,255,0.7)",
   },
   container: {
     flex: 1,
@@ -475,6 +531,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: "center",
     margin: 10,
+  },
+  footerButtons: {
+    position: 'absolute',
+    bottom: 0,
+    textAlign: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    // backgroundColor:'red'
+
   },
   listViewContainer: {
     height: 150,
