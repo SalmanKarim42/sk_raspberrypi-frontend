@@ -20,6 +20,7 @@ class HomePage extends Component {
         return (
             <Container>
                 <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.header}>
+                    
                     <Text style={{color: '#fff', fontSize: 25,fontWeight: '500'}}>Electric DB</Text>
                 </LinearGradient>
                 <View style={{justifyContent: 'center',height: '88%'}}>
