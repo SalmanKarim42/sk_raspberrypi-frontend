@@ -10,7 +10,7 @@ import { Item, Input, Button, Form, Header, Container, Icon } from 'native-base'
 import { Actions } from 'react-native-router-flux';
 import LinearGradient from 'react-native-linear-gradient';
 // var img = require('./components/raspi.jpg');
-class Login extends Component {
+class SignUp extends Component {
     constructor(props) {
         super(props);
 
@@ -25,7 +25,7 @@ class Login extends Component {
                         <Image source={require('./components/raspi.png')} style={styles.logo_header} />
                     </View>
                     <View style={styles.login_text_view}>
-                        <Text style={styles.login_text}>Login</Text>
+                        <Text style={styles.login_text}>SignUp</Text>
                     </View>
                 </LinearGradient>
                 <View style={styles.container}>
@@ -43,14 +43,14 @@ class Login extends Component {
                 </View>
                 <View style={styles.bttn_view}>
                     <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.login_bttn}>
-                        <Text style={styles.login_bttn_text}>LOGIN</Text>
+                        <Text style={styles.login_bttn_text}>SIGNUP</Text>
                     </LinearGradient>
                 </View>
                 <View style={styles.footer}>
                     <Item style={styles.footer_item}>
-                        <Text>Dont't have an account ? </Text>
+                        <Text>have already an account ? </Text>
                         <Text style={{ color: 'red' }}
-                            onPress={()=> Actions.signup()}>&nbsp; SignUp </Text>
+                            onPress={()=> Actions.login()}>&nbsp; Login </Text>
                     </Item>
                 </View>
             </Container>
@@ -160,4 +160,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Login;
+export default SignUp;

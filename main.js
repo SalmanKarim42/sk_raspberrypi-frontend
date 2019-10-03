@@ -8,11 +8,17 @@ import {
 import {
   Router,
   Stack,
+  Drawer,
   Scene
 } from "react-native-router-flux";
+import firebase, { Notification, RemoteMessage } from 'react-native-firebase';
 import Home from "./src/Home";
 import Login from "./src/Login";
-import firebase, { Notification, RemoteMessage } from 'react-native-firebase';
+import SignUp from "./src/SignUp";
+import InnerCam from "./src/InnerCam";
+import OutterCam from "./src/OutterCam";
+import HomePage from "./src/HomePage";
+import SideBar from "./src/SideBar";
 
 class RCTWebRTCDemo extends Component {
   constructor(props) {
@@ -54,14 +60,21 @@ class RCTWebRTCDemo extends Component {
       }
     }
   }
+
   render() {
     return (
-      <Router>
-        <Stack key="root" hideNavBar={true}>
-          <Scene initial key="login" component={Login} title="Login" />
-          {/* <Scene key="register" component={Register} title="Register" /> */}
-          <Scene key="home" component={Home} />
-        </Stack>
+      <Router hideNavBar="true">
+        <Scene key="root">
+          {/* <Scene key="login" component={Login} title="Login" hideNavBar={true}/>
+            <Scene key="signup" component={SignUp} title="SignUp" hideNavBar={true}/> */}
+          <Drawer hideNavBar key="drawerMenu" contentComponent={SideBar} drawerWidth={250} drawerPosition="Left">
+            <Scene key="innercam" component={InnerCam} title="InnerCam" hideNavBar={true} />
+            <Scene key="outtercam" component={OutterCam} title="OutterCam" hideNavBar={true} />
+            <Scene initial key="homepage" component={HomePage} title="HomePage" hideNavBar={true} />
+            {/* <Scene key="register" component={Register} title="Register" /> */}
+            <Scene key="home" component={Home} />
+          </Drawer>
+        </Scene>
       </Router>
     );
   }
