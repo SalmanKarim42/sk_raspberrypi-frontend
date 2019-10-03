@@ -6,11 +6,11 @@ import {
     TouchableHighlight,
     Image
 } from "react-native";
-import { Item, Input, Button, Form, Header, Container, Icon } from 'native-base';
+import { Item, Input, Button, Form, Header, Container, Icon, Left } from 'native-base';
 import { Actions } from 'react-native-router-flux';
 import LinearGradient from 'react-native-linear-gradient';
 // var img = require('./components/raspi.jpg');
-class Login extends Component {
+class HomePage extends Component {
     constructor(props) {
         super(props);
 
@@ -20,39 +20,28 @@ class Login extends Component {
         return (
             <Container>
                 <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.header}>
-
-                    <View style={styles.img_view}>
-                        <Image source={require('./components/raspi.png')} style={styles.logo_header} />
-                    </View>
-                    <View style={styles.login_text_view}>
-                        <Text style={styles.login_text}>Login</Text>
-                    </View>
+                    <Text style={{color: '#fff', fontSize: 25,fontWeight: '500'}}>Electric DB</Text>
                 </LinearGradient>
-                <View style={styles.container}>
-                    <Item style={styles.item}>
-                        <Icon style={styles.input_icon} name="email" type="MaterialIcons" />
-                        <Input style={styles.item_input} placeholderTextColor="gray" placeholder='Email' />
-                    </Item>
-                    <Item style={styles.item}>
-                        <Icon style={styles.input_icon} name='md-key' type="Ionicons" />
-                        <Input style={styles.item_input} placeholderTextColor="gray" placeholder='Password' />
-                    </Item>
-                    {/* <View style={styles.forget_view}>
-                        <Text styles={{ color: 'gray'  }} >Forgot Password ?</Text>
-                    </View> */}
+                <View style={{justifyContent: 'center',height: '88%'}}>
+                    <View style={styles.bttn_view}  >
+                        <Button style={styles.login_bttn} onPress={()=> Actions.innercam()} >
+                            <Text style={styles.login_bttn_text}>Inner Camera</Text>
+                        </Button>
+                    </View>
+                    <View style={styles.bttn_view}  >
+                        <Button style={styles.login_bttn} onPress={()=> Actions.outtercam()} >
+                            <Text style={styles.login_bttn_text}>Outter Camera</Text>
+                        </Button>
+                    </View>
+                    
                 </View>
-                <View style={styles.bttn_view}>
-                    <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.login_bttn}>
-                        <Text style={styles.login_bttn_text}>LOGIN</Text>
-                    </LinearGradient>
-                </View>
-                <View style={styles.footer}>
+                {/* <View style={styles.footer}>
                     <Item style={styles.footer_item}>
                         <Text>Dont't have an account ? </Text>
                         <Text style={{ color: 'red' }}
-                            onPress={()=> Actions.signup()}>&nbsp; SignUp </Text>
+                            onPress={() => Actions.signup()}>&nbsp; SignUp </Text>
                     </Item>
-                </View>
+                </View> */}
             </Container>
 
         );
@@ -67,9 +56,11 @@ const styles = StyleSheet.create({
     },
     header: {
         // backgroundColor: '#F18200',
-        height: '40%',
+        height: '12%',
         width: '100%',
-        borderBottomLeftRadius: 100,
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 3,
@@ -134,11 +125,11 @@ const styles = StyleSheet.create({
     },
     login_bttn: {
         width: '80%',
-        // backgroundColor: '#F18200',
+        backgroundColor: '#F18200',
         borderRadius: 50,
-       justifyContent: 'center',
-       padding: 14,
-       elevation: 3,
+        justifyContent: 'center',
+        padding: 14,
+        elevation: 3,
     },
     login_bttn_text: {
         color: '#fff',
@@ -160,4 +151,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default Login;
+export default HomePage;
