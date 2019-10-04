@@ -3,38 +3,65 @@ import {
     StyleSheet,
     View,
     Text,
-    TouchableHighlight,
-    Image
+    TouchableOpacity,
+    Image,
+    BackHandler
 } from "react-native";
 import { Item, Input, Button, Form, Header, Container, Icon, Left } from 'native-base';
 import { Actions } from 'react-native-router-flux';
 import LinearGradient from 'react-native-linear-gradient';
+import firebase from "react-native-firebase";
 // var img = require('./components/raspi.jpg');
 class HomePage extends Component {
     constructor(props) {
         super(props);
 
     }
+    componentWillMount() {
+        firebase.auth().onAuthStateChanged(user => {
+            if (!user) {
+                Actions.login();
+            }
+        })
+    }
 
+    componentDidMount() {
+
+        this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
+    }
+
+    componentWillUnmount() {
+        this.backHandler.remove()
+    }
+
+    handleBackPress = () => {
+        // this.goBack(); // works best when the goBack is async
+        // console.log('111backpress')
+        return true;
+    }
     render() {
         return (
             <Container>
                 <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.header}>
-                    
-                    <Text style={{color: '#fff', fontSize: 25,fontWeight: '500'}}>Electric DB</Text>
+                    <TouchableOpacity style={styles.backButton} onPress={() => Actions.drawerOpen()}>
+                        <Icon style={{ fontSize: 26, color: 'white' }} name="md-menu" type="Ionicons"></Icon>
+                    </TouchableOpacity>
+                    <Text style={{ color: '#fff', fontSize: 25, fontWeight: '500', }}>Electric DB</Text>
                 </LinearGradient>
-                <View style={{justifyContent: 'center',height: '88%'}}>
+                <View style={{ justifyContent: 'center', height: '88%' }}>
                     <View style={styles.bttn_view}  >
-                        <Button style={styles.login_bttn} onPress={()=> Actions.innercam()} >
+                        <Button style={styles.login_bttn} onPress={() => Actions.innercam()} >
+                            <Icon name='video-camera' type='FontAwesome'></Icon>
                             <Text style={styles.login_bttn_text}>Inner Camera</Text>
                         </Button>
                     </View>
                     <View style={styles.bttn_view}  >
-                        <Button style={styles.login_bttn} onPress={()=> Actions.outtercam()} >
+                        <Button style={styles.login_bttn} onPress={() => Actions.outtercam()} >
+                            <Icon name='video-camera' type='Entypo'></Icon>
                             <Text style={styles.login_bttn_text}>Outter Camera</Text>
                         </Button>
                     </View>
-                    
+
                 </View>
                 {/* <View style={styles.footer}>
                     <Item style={styles.footer_item}>
@@ -55,6 +82,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    backButton: {
+        padding: 10,
+        left: 0,
+        position: 'absolute',
+        marginLeft: 10
+    },
     header: {
         // backgroundColor: '#F18200',
         height: '12%',
@@ -63,6 +96,7 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 30,
         flexDirection: 'row',
         justifyContent: 'center',
+        alignContent: 'center',
         alignItems: 'center',
         elevation: 3,
 

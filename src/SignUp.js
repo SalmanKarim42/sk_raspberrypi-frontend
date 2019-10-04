@@ -3,22 +3,111 @@ import {
     StyleSheet,
     View,
     Text,
-    TouchableHighlight,
-    Image
+    TouchableOpacity,
+    Image,
+    ToastAndroid
 } from "react-native";
-import { Item, Input, Button, Form, Header, Container, Icon } from 'native-base';
+import { Item, Input, Button, Form, Header, Container, Icon, Content } from 'native-base';
 import { Actions } from 'react-native-router-flux';
 import LinearGradient from 'react-native-linear-gradient';
+import firebase from "react-native-firebase";
+import CustomLoading from './Loading';
 // var img = require('./components/raspi.jpg');
 class SignUp extends Component {
     constructor(props) {
         super(props);
+        this.state = {
+            email: '',
+            password: '',
+            raspi_id: '',
+            isLoading: false
+        }
 
     }
+    componentWillMount() {
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                Actions.homepage();
+            }
+        })
+    }
+    _emptyFields = () => {
+        this.setState({
+            email: '',
+            password: '',
+            raspi_id: '',
+            isLoading: false
+        })
+        console.log('empty')
+    }
+    _loginUser = () => {
+        let { raspi_id, email, password } = this.state;
+        let self = this;
+        if (raspi_id == '') return console.log('must type raspi id')
+        let db = firebase.database().ref('raspberry_db/');
 
+        if (email !== '' && password !== '') {
+            this.setState({
+                isLoading: true
+            })
+            db.once('value', function (snapshot) {
+                console.log(snapshot.val(), 'is have ');
+                if (snapshot.hasChild(raspi_id.toLowerCase())
+                    && typeof snapshot.child(raspi_id.toLowerCase()).val() == "string"
+                ) {
+                    console.log(snapshot.child(raspi_id.toLowerCase()).val(), typeof snapshot.child(raspi_id.toLowerCase()).val(), 'value');
+                    firebase.auth().createUserWithEmailAndPassword(email, password)
+                        .then(res => {
+                            console.log(res, 'signup res ');
+                            db.child(raspi_id.toLowerCase()).set(res.user).then(function (s) {
+                                self._emptyFields();
+                                console.log('add item', s)
+                                Actions.homepage();
+                            })
+                            
+                        }).catch(err => {
+                            console.log(err);
+                            self.setState({
+                                isLoading: false
+                            })
+                            switch (err.code) {
+                                case 'auth/email-already-in-use':
+                                    ToastAndroid.show('Email already in use ', ToastAndroid.SHORT)
+                                    console.log('already in use ', err.message);
+                                    break;
+                                case 'auth/invalid-email':
+                                    ToastAndroid.show('Invalid Email', ToastAndroid.SHORT)
+                                    console.log('invalid email ', err.message);
+                                    break;
+                                case 'auth/operation-not-allowed':
+                                    ToastAndroid.show('Auth is not Enable', ToastAndroid.SHORT)
+                                    console.log('enable auth ', err.message);
+                                    break;
+                                case 'auth/weak-password':
+                                    ToastAndroid.show('Password is weak, Password atleast 6 Letters ', ToastAndroid.SHORT)
+                                    console.log('weak pass ', err.message);
+                                    break;
+                                default:
+                                    ToastAndroid.show('Network Error', ToastAndroid.SHORT);
+                                    break;
+                            }
+                        })
+                } else {
+                    ToastAndroid.show('your device id is not registered')
+                }
+            }, function (err) {
+                console.log('error ', err)
+                self.setState({
+                    isLoading: false
+                })
+            })
+
+        }
+    }
     render() {
         return (
             <Container>
+                {this.state.isLoading ? <CustomLoading /> : null}
                 <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.header}>
 
                     <View style={styles.img_view}>
@@ -28,31 +117,41 @@ class SignUp extends Component {
                         <Text style={styles.login_text}>SignUp</Text>
                     </View>
                 </LinearGradient>
-                <View style={styles.container}>
-                    <Item style={styles.item}>
-                        <Icon style={styles.input_icon} name="email" type="MaterialIcons" />
-                        <Input style={styles.item_input} placeholderTextColor="gray" placeholder='Email' />
-                    </Item>
-                    <Item style={styles.item}>
-                        <Icon style={styles.input_icon} name='md-key' type="Ionicons" />
-                        <Input style={styles.item_input} placeholderTextColor="gray" placeholder='Password' />
-                    </Item>
-                    {/* <View style={styles.forget_view}>
+                <Content>
+
+                    <View style={styles.container}>
+                        <Item style={styles.item}>
+                            <Icon style={styles.input_icon} name="raspberry-pi" type="FontAwesome5" />
+                            <Input style={styles.item_input} value={this.state.raspi_id} placeholderTextColor="gray" placeholder='Raspberry Pi Id' onChangeText={(raspi_id) => this.setState({ raspi_id })} />
+                        </Item>
+                        <Item style={styles.item}>
+                            <Icon style={styles.input_icon} name="email" type="MaterialIcons" />
+                            <Input style={styles.item_input} value={this.state.email} placeholderTextColor="gray" placeholder='Email' onChangeText={(email) => this.setState({ email })} />
+                        </Item>
+                        <Item style={styles.item}>
+                            <Icon style={styles.input_icon} name='md-key' type="Ionicons" />
+                            <Input style={styles.item_input} value={this.state.password} placeholderTextColor="gray" placeholder='Password' onChangeText={(password) => this.setState({ password })} />
+                        </Item>
+                        {/* <View style={styles.forget_view}>
                         <Text styles={{ color: 'gray'  }} >Forgot Password ?</Text>
                     </View> */}
-                </View>
-                <View style={styles.bttn_view}>
-                    <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.login_bttn}>
-                        <Text style={styles.login_bttn_text}>SIGNUP</Text>
-                    </LinearGradient>
-                </View>
-                <View style={styles.footer}>
-                    <Item style={styles.footer_item}>
-                        <Text>have already an account ? </Text>
-                        <Text style={{ color: 'red' }}
-                            onPress={()=> Actions.login()}>&nbsp; Login </Text>
-                    </Item>
-                </View>
+                    </View>
+                    <TouchableOpacity style={styles.bttn_view} onPress={() => this._loginUser()}>
+                        {/* <View > */}
+
+                        <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.login_bttn} >
+                            <Text style={styles.login_bttn_text}>SIGNUP</Text>
+                        </LinearGradient>
+                        {/* </View>/ */}
+                    </TouchableOpacity>
+                    <View style={styles.footer}>
+                        <Item style={styles.footer_item}>
+                            <Text>have already an account ? </Text>
+                            <Text style={{ color: 'red' }}
+                                onPress={() => Actions.pop()}>&nbsp; Login </Text>
+                        </Item>
+                    </View>
+                </Content>
             </Container>
 
         );
@@ -131,14 +230,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         marginBottom: 40,
+        marginTop: 40,
     },
     login_bttn: {
         width: '80%',
         // backgroundColor: '#F18200',
         borderRadius: 50,
-       justifyContent: 'center',
-       padding: 14,
-       elevation: 3,
+        justifyContent: 'center',
+        padding: 14,
+        elevation: 3,
     },
     login_bttn_text: {
         color: '#fff',

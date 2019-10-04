@@ -3,7 +3,7 @@ import {
     StyleSheet,
     View,
     Text,
-    TouchableHighlight,
+    TouchableOpacity,
     Image,
     ImageBackground
 } from "react-native";
@@ -16,8 +16,11 @@ class InnerCam extends Component {
     render() {
         return (
             <ImageBackground source={require('./components/video.jpg')} style={{ width: '100%', height: '100%', justifyContent: 'space-between' }}>
-                <Header style={{ backgroundColor: 'transparent',justifyContent: 'center',alignItems: 'center' }}>
-                    <Text style={{color: '#fff', fontSize: 25,fontWeight: '500', textAlign: 'center'}}>Inner Camera</Text>
+                <Header style={{ backgroundColor: 'transparent', justifyContent: 'center', alignItems: 'center' }}>
+                    <TouchableOpacity style={styles.backButton} onPress={()=>Actions.pop()}>
+                        <Icon style={{ fontSize: 26, color: 'white' }} name="md-arrow-round-back" type="Ionicons"></Icon>
+                    </TouchableOpacity>
+                    <Text style={{ color: '#fff', fontSize: 25, fontWeight: '500', textAlign: 'center' }}>Inner Camera</Text>
                 </Header>
                 <Footer style={styles.footer_video}>
                     <View style={styles.icon_view}>
@@ -48,6 +51,12 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderRadius: 50,
         margin: 10
+    },
+    backButton:{
+        padding:10,
+        left:0,
+        position:'absolute',
+        marginLeft:10
     },
     icon_call_view: {
         height: 60,

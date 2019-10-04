@@ -1,11 +1,21 @@
 import React from "react";
 import { AppRegistry, Image, StatusBar } from "react-native";
-import { Button, Text, Container, List, ListItem, Content, Icon } from "native-base";
+import { Button, Text, Container, List, ListItem, Content, Icon, View } from "native-base";
+import { Actions } from "react-native-router-flux";
+import firebase from "react-native-firebase";
 const routes = [
-    { link: "Inner Camera", title: " Inner Camera" },
-    { link: "Outter Camera", title: " Outter Camera" },
+    { key: "1", link: () => Actions.innercam(), title: " Inner Camera", icon: 'video-camera', type: 'FontAwesome' },
+    { key: "2", link: () => Actions.outtercam(), title: " Outter Camera", icon: 'video-camera', type: 'Entypo' },
+    { key: "3", link: () => signOut(), title: " SignOut", icon: 'log-out', type: 'Entypo' },
 ];
+function signOut() {
+    firebase.auth().signOut();
+    Actions.popTo('login');
+}
 export default class SideBar extends React.Component {
+    componentDidMount() {
+
+    }
     render() {
         return (
             <Container>
@@ -18,10 +28,9 @@ export default class SideBar extends React.Component {
                             alignSelf: "stretch",
                             position: "absolute",
                             // resizeMode: 'contain'
-
                         }}
                     />
-                    <Image
+                    {/* <Image
                         square
                         style={{
                             borderRadius: 40,
@@ -32,13 +41,14 @@ export default class SideBar extends React.Component {
                             top: 20
                         }}
                         source={require("./components/raspi.png")}
-                    />
+                    /> */}
                     <List
                         dataArray={routes}
                         contentContainerStyle={{ marginTop: 180 }}
                         renderRow={data => {
                             return (
-                                <ListItem button onPress={() => this.props.navigation.navigate(data.link)}>
+                                <ListItem key={data.key} button onPress={data.link}>
+                                    <Icon style={{ fontSize: 14 }} name={data.icon} type={data.type}></Icon>
                                     <Text>{data.title}</Text>
                                 </ListItem>
                             );

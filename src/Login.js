@@ -3,22 +3,90 @@ import {
     StyleSheet,
     View,
     Text,
-    TouchableHighlight,
-    Image
+    TouchableOpacity,
+    Image,
+    ScrollView,
+    ToastAndroid
 } from "react-native";
-import { Item, Input, Button, Form, Header, Container, Icon } from 'native-base';
+import { Item, Input, Button, Form, Header, Container, Icon, Body, Content } from 'native-base';
 import { Actions } from 'react-native-router-flux';
 import LinearGradient from 'react-native-linear-gradient';
 // var img = require('./components/raspi.jpg');
+import firebase from 'react-native-firebase';
+import CustomLoading from './Loading';
+
 class Login extends Component {
     constructor(props) {
         super(props);
+        this.state = {
+            email: "",
+            password: "",
+            isLoading: false
+        }
 
+    }
+    componentWillMount() {
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                Actions.homepage();
+            }
+        })
+    }
+    _emptyFields = () => {
+        this.setState({
+            email: '',
+            password: '',
+            isLoading: false
+        })
+        console.log('empty')
+    }
+    _loginUser = () => {
+        let { email, password } = this.state;
+        let self = this;
+        if (email !== '' && password !== '') {
+            this.setState({
+                isLoading: true
+            })
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then(res => {
+                    console.log(res, 'signup res ', this);
+                    self._emptyFields();
+                    Actions.homepage();
+                }).catch(err => {
+                    // console.log(err);
+                    self.setState({
+                        isLoading: false
+                    })
+                    switch (err.code) {
+                        case 'auth/invalid-email':
+                            ToastAndroid.show('Invalid Email', ToastAndroid.LONG)
+                            console.log('invalid email ', err.message);
+                            break;
+                        case 'auth/user-disabled':
+                            ToastAndroid.show('User is Disabled by Admin', ToastAndroid.LONG)
+                            console.log('User is Disabled by Admin', err.message);
+                            break;
+                        case 'auth/user-not-found':
+                            ToastAndroid.show('User not Found ', ToastAndroid.LONG)
+                            console.log('User not Found ', err.message);
+                            break;
+                        case 'auth/wrong-password':
+                            ToastAndroid.show('Wrong Password', ToastAndroid.LONG)
+                            console.log('wrong pass ', err.message);
+                            break;
+                        default:
+                            ToastAndroid.show('Network Error', ToastAndroid.SHORT);
+                            break;
+                    }
+                })
+        }
     }
 
     render() {
+        // console.log('loading', this.state.isLoading);
         return (
             <Container>
+                {this.state.isLoading ? <CustomLoading /> : null}
                 <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.header}>
 
                     <View style={styles.img_view}>
@@ -28,31 +96,43 @@ class Login extends Component {
                         <Text style={styles.login_text}>Login</Text>
                     </View>
                 </LinearGradient>
-                <View style={styles.container}>
-                    <Item style={styles.item}>
-                        <Icon style={styles.input_icon} name="email" type="MaterialIcons" />
-                        <Input style={styles.item_input} placeholderTextColor="gray" placeholder='Email' />
-                    </Item>
-                    <Item style={styles.item}>
-                        <Icon style={styles.input_icon} name='md-key' type="Ionicons" />
-                        <Input style={styles.item_input} placeholderTextColor="gray" placeholder='Password' />
-                    </Item>
-                    {/* <View style={styles.forget_view}>
+                <Content>
+                    <View style={{
+                        flex: 1,
+                        height: '100%',
+                        justifyContent: 'space-between'
+                    }}>
+
+                        <View style={styles.container}>
+                            <Item style={styles.item}>
+                                <Icon style={styles.input_icon} name="email" type="MaterialIcons" />
+                                <Input value={this.state.email} style={styles.item_input} placeholderTextColor="gray" placeholder='Email' onChangeText={email => this.setState({ email })} />
+                            </Item>
+                            <Item style={styles.item}>
+                                <Icon style={styles.input_icon} name='md-key' type="Ionicons" />
+                                <Input style={styles.item_input} value={this.state.password} placeholderTextColor="gray" placeholder='Password' onChangeText={password => this.setState({ password })} />
+                            </Item>
+                            {/* <View style={styles.forget_view}>
                         <Text styles={{ color: 'gray'  }} >Forgot Password ?</Text>
                     </View> */}
-                </View>
-                <View style={styles.bttn_view}>
-                    <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.login_bttn}>
-                        <Text style={styles.login_bttn_text}>LOGIN</Text>
-                    </LinearGradient>
-                </View>
-                <View style={styles.footer}>
-                    <Item style={styles.footer_item}>
-                        <Text>Dont't have an account ? </Text>
-                        <Text style={{ color: 'red' }}
-                            onPress={()=> Actions.signup()}>&nbsp; SignUp </Text>
-                    </Item>
-                </View>
+                        </View>
+                        <TouchableOpacity style={styles.bttn_view} onPress={() => this._loginUser()}>
+                            {/* <View > */}
+
+                            <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.login_bttn}>
+                                <Text style={styles.login_bttn_text}>LOGIN</Text>
+                            </LinearGradient>
+                            {/* </View> */}
+                        </TouchableOpacity>
+                        <View style={styles.footer}>
+                            <Item style={styles.footer_item}>
+                                <Text>Dont't have an account ? </Text>
+                                <Text style={{ color: 'red' }}
+                                    onPress={() => Actions.signup()}>&nbsp; SignUp </Text>
+                            </Item>
+                        </View>
+                    </View>
+                </Content>
             </Container>
 
         );
@@ -73,6 +153,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         elevation: 3,
+        zIndex: 0
 
     },
     img_view: {
@@ -131,14 +212,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         marginBottom: 40,
+        marginTop: 40
     },
     login_bttn: {
         width: '80%',
         // backgroundColor: '#F18200',
         borderRadius: 50,
-       justifyContent: 'center',
-       padding: 14,
-       elevation: 3,
+        justifyContent: 'center',
+        padding: 14,
+        elevation: 3,
     },
     login_bttn_text: {
         color: '#fff',
@@ -155,7 +237,7 @@ const styles = StyleSheet.create({
         borderTopWidth: 0,
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20
+        padding: 20,
         // backgroundColor: '#F5FCFF',
     },
 });

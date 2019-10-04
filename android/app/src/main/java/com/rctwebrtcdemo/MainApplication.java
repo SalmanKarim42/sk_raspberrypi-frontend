@@ -6,6 +6,8 @@ import com.facebook.react.ReactApplication;
 import io.invertase.firebase.RNFirebasePackage;
 import io.invertase.firebase.messaging.RNFirebaseMessagingPackage;   
 import io.invertase.firebase.notifications.RNFirebaseNotificationsPackage;
+import io.invertase.firebase.auth.RNFirebaseAuthPackage; // <-- Auth
+import io.invertase.firebase.database.RNFirebaseDatabasePackage; // <-- DataBase 
 import com.BV.LinearGradient.LinearGradientPackage;
 import com.oblador.vectoricons.VectorIconsPackage;
 import com.facebook.react.ReactNativeHost;
@@ -34,7 +36,9 @@ public class MainApplication extends Application implements ReactApplication {
           new RNFirebaseMessagingPackage(),
           new RNFirebaseNotificationsPackage(),
           new LinearGradientPackage(),
-          new VectorIconsPackage()
+          new VectorIconsPackage(),
+          new RNFirebaseAuthPackage(),
+          new RNFirebaseDatabasePackage()
       );
     }
   };
