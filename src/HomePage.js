@@ -26,7 +26,7 @@ class HomePage extends Component {
     }
 
     componentDidMount() {
-
+        console.log(firebase.storage().app)
         this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
     }
 

@@ -59,10 +59,18 @@ class SignUp extends Component {
                     firebase.auth().createUserWithEmailAndPassword(email, password)
                         .then(res => {
                             console.log(res, 'signup res ');
-                            db.child(raspi_id.toLowerCase()).set(res.user).then(function (s) {
-                                self._emptyFields();
-                                console.log('add item', s)
-                                Actions.homepage();
+                            res.user.updateProfile({
+                                displayName: raspi_id.toLowerCase()
+                            }).then(function(){
+                                db.child(raspi_id.toLowerCase()).set(res.user).then(function (s) {
+                                    self._emptyFields();
+                                    console.log('add item', s)
+                                    Actions.homepage();
+                                }).catch(function(err){
+                                    console.log(err)
+                                })
+                            }).catch(err=>{
+                                console.log(err)
                             })
                             
                         }).catch(err => {
