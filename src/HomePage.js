@@ -5,6 +5,8 @@ import {
     Text,
     TouchableOpacity,
     Image,
+    Platform,
+    AsyncStorage,
     BackHandler
 } from "react-native";
 import { Item, Input, Button, Form, Header, Container, Icon, Left } from 'native-base';
@@ -15,19 +17,28 @@ import firebase from "react-native-firebase";
 class HomePage extends Component {
     constructor(props) {
         super(props);
+        this.state = {
+            user: null
+        }
 
-    }
-    componentWillMount() {
-        firebase.auth().onAuthStateChanged(user => {
-            if (!user) {
-                Actions.login();
-            }
-        })
     }
 
     componentDidMount() {
-        console.log(firebase.storage().app)
         this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
+        AsyncStorage.getItem('user').then(user => {
+            user = JSON.parse(user);
+            this.setState({
+                user
+            })
+            // console.log(user, 'user');
+            if (user) {
+                if (Platform.OS === 'android') {
+                    this.setupNotification();
+                }
+            }
+        })
+        this.users = firebase.database().ref('raspberry_db/users');
+        this.devices = firebase.database().ref('raspberry_db/devices');
     }
 
     componentWillUnmount() {
@@ -39,6 +50,51 @@ class HomePage extends Component {
         // console.log('111backpress')
         return true;
     }
+    setupNotification = async () => {
+        try {
+            const res = await firebase.messaging().requestPermission();
+            const fcmToken = await firebase.messaging().getToken();
+            if (fcmToken) {
+                console.log('FCM Token: ', fcmToken);
+                this.users.child(this.state.user.uid).update({ fcmToken }).then(e => {
+                    console.log('success', e)
+                }).catch(err => {
+                    console.log('error', err)
+                })
+                this.devices.child(this.state.user.raspi_id).update({ fcmToken }).then(e => {
+                    console.log('success', e)
+                }).catch(err => {
+                    console.log('error', err)
+                })
+                const enabled = await firebase.messaging().hasPermission();
+                if (enabled) {
+                    console.log('FCM messaging has permission:' + enabled)
+                } else {
+                    try {
+                        await firebase.messaging().requestPermission();
+                        console.log('FCM permission granted')
+                    } catch (error) {
+                        console.log('FCM Permission Error', error);
+                    }
+                }
+                firebase.notifications().onNotificationDisplayed((notification: Notification) => {
+                    // Process your notification as required
+                    // ANDROID: Remote notifications do not contain the channel ID. You will have to specify this manually if you'd like to re-display the notification.
+                    console.log('Notification: ', notification)
+                    firebase.notifications().displayNotification(notification);
+                });
+                this.notificationListener = firebase.notifications().onNotification((notification: Notification) => {
+                    console.log('Notification: ', notification)
+                    firebase.notifications().displayNotification(notification);
+                });
+            } else {
+                console.log('FCM Token not available');
+            }
+        } catch (e) {
+            console.log('Error initializing FCM', e);
+        }
+    }
+
     render() {
         return (
             <Container>

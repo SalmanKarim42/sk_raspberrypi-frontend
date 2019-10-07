@@ -5,7 +5,8 @@ import {
     Text,
     TouchableOpacity,
     Image,
-    ToastAndroid
+    ToastAndroid,
+    AsyncStorage
 } from "react-native";
 import { Item, Input, Button, Form, Header, Container, Icon, Content } from 'native-base';
 import { Actions } from 'react-native-router-flux';
@@ -50,29 +51,55 @@ class SignUp extends Component {
             this.setState({
                 isLoading: true
             })
-            db.once('value', function (snapshot) {
-                console.log(snapshot.val(), 'is have ');
-                if (snapshot.hasChild(raspi_id.toLowerCase())
-                    && typeof snapshot.child(raspi_id.toLowerCase()).val() == "string"
+            console.log(db, 'db')
+            db.child('devices').once('value', function (snapshot) {
+                console.log(snapshot, 'is have ');
+                raspi_id = raspi_id.toLowerCase();
+                if (snapshot.hasChild(raspi_id)
+                    && typeof snapshot.child(raspi_id).val() == "string"
                 ) {
-                    console.log(snapshot.child(raspi_id.toLowerCase()).val(), typeof snapshot.child(raspi_id.toLowerCase()).val(), 'value');
                     firebase.auth().createUserWithEmailAndPassword(email, password)
                         .then(res => {
                             console.log(res, 'signup res ');
-                            res.user.updateProfile({
-                                displayName: raspi_id.toLowerCase()
-                            }).then(function(){
-                                db.child(raspi_id.toLowerCase()).set(res.user).then(function (s) {
-                                    self._emptyFields();
-                                    console.log('add item', s)
+                            var insertData = {};
+                            insertData['/devices/' + raspi_id] = { ...res.user._user, raspi_id };
+                            insertData['/users/' + res.user.uid] = { ...res.user._user, raspi_id };
+                            db.update(insertData).then(e => {
+                                self._emptyFields();
+                                console.log('add item', e)
+                                AsyncStorage.setItem('user', JSON.stringify({ ...res.user._user, raspi_id })).then(e => {
                                     Actions.homepage();
-                                }).catch(function(err){
-                                    console.log(err)
+                                }).catch(er => {
+                                    console.log('error while saving data');
                                 })
-                            }).catch(err=>{
-                                console.log(err)
+                            }).catch(err => {
+                                self.setState({
+                                    isLoading: false
+                                })
+                                console.log('user error', err);
                             })
-                            
+                            // devices.child(raspi_id).set(res.user).then(function (s) {
+
+                            //     users.child(res.user.uid).set({ ...res.user, device: raspi_id }).then(function (e) {
+
+                            //         self._emptyFields();
+                            //         console.log('add item', s)
+                            //         Actions.homepage();
+
+                            //     }).catch(err => {
+                            //         self.setState({
+                            //             isLoading: false
+                            //         })
+                            //         console.log('user error', err);
+                            //     })
+                            // }).catch(function (err) {
+                            //     self.setState({
+                            //         isLoading: false
+                            //     })
+                            //     console.log(err)
+                            // })
+
+
                         }).catch(err => {
                             console.log(err);
                             self.setState({
@@ -102,6 +129,9 @@ class SignUp extends Component {
                         })
                 } else {
                     ToastAndroid.show('your device id is not registered')
+                    self.setState({
+                        isLoading: false
+                    })
                 }
             }, function (err) {
                 console.log('error ', err)

@@ -6,7 +6,8 @@ import {
     TouchableOpacity,
     Image,
     ScrollView,
-    ToastAndroid
+    ToastAndroid,
+    AsyncStorage
 } from "react-native";
 import { Item, Input, Button, Form, Header, Container, Icon, Body, Content } from 'native-base';
 import { Actions } from 'react-native-router-flux';
@@ -25,7 +26,7 @@ class Login extends Component {
         }
 
     }
-    componentWillMount() {
+    componentDidMount() {
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
                 Actions.homepage();
@@ -51,7 +52,18 @@ class Login extends Component {
                 .then(res => {
                     console.log(res, 'signup res ', this);
                     self._emptyFields();
-                    Actions.homepage();
+                    let db = firebase.database().ref('raspberry_db/');
+                    db.child('users').child(res.user.uid).once('value', snapshot => {
+                        AsyncStorage.setItem('user', JSON.stringify(snapshot.val())).then(_=>{
+                            Actions.homepage();
+                        })
+                    },
+                        err => {
+                            self.setState({
+                                isLoading: false
+                            })
+                            console.log('error while getting data ');
+                        })
                 }).catch(err => {
                     // console.log(err);
                     self.setState({

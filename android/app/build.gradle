@@ -58,6 +58,8 @@ android {
 }
 
 dependencies {
+    compile project(':react-native-sound')
+    implementation project(':react-native-audio')
     // compile project(':react-native-firebase')
     implementation project(':react-native-firebase') 
     implementation project(':react-native-linear-gradient')

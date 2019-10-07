@@ -20,6 +20,8 @@ import InnerCam from "./src/InnerCam";
 import OutterCam from "./src/OutterCam";
 import HomePage from "./src/HomePage";
 import SideBar from "./src/SideBar";
+import AudioExample from "./src/RecodeList";
+import MainView from "./src/audiolist";
 
 class RCTWebRTCDemo extends Component {
   constructor(props) {
@@ -32,49 +34,13 @@ class RCTWebRTCDemo extends Component {
       if (user) {
         console.log('is user login ', user);
         Actions.homepage();
-        if (Platform.OS === 'android') {
-          this.setupNotification();
-        }
+        
       } else {
         console.log('user not login ');
       }
     })
   }
-  setupNotification = async () => {
-    try {
-      const res = await firebase.messaging().requestPermission();
-      const fcmToken = await firebase.messaging().getToken();
-      if (fcmToken) {
-        console.log('FCM Token: ', fcmToken);
-        const enabled = await firebase.messaging().hasPermission();
-        if (enabled) {
-          console.log('FCM messaging has permission:' + enabled)
-        } else {
-          try {
-            await firebase.messaging().requestPermission();
-            console.log('FCM permission granted')
-          } catch (error) {
-            console.log('FCM Permission Error', error);
-          }
-        }
-        firebase.notifications().onNotificationDisplayed((notification: Notification) => {
-          // Process your notification as required
-          // ANDROID: Remote notifications do not contain the channel ID. You will have to specify this manually if you'd like to re-display the notification.
-          console.log('Notification: ', notification)
-          firebase.notifications().displayNotification(notification);
-        });
-        this.notificationListener = firebase.notifications().onNotification((notification: Notification) => {
-          console.log('Notification: ', notification)
-          firebase.notifications().displayNotification(notification);
-        });
-      } else {
-        console.log('FCM Token not available');
-      }
-    } catch (e) {
-      console.log('Error initializing FCM', e);
-    }
-  }
-
+  
   render() {
     return (
       <Router hideNavBar="true">
@@ -85,6 +51,8 @@ class RCTWebRTCDemo extends Component {
             <Scene initial key="homepage" component={HomePage} title="HomePage" hideNavBar={true} />
             <Scene key="innercam" component={InnerCam} title="InnerCam" hideNavBar={true} />
             <Scene key="outtercam" component={OutterCam} title="OutterCam" hideNavBar={true} />
+            <Scene key="audioList" component={AudioExample} title="Pre-Recorded Messages" hideNavBar={true} />
+            <Scene key="audios" component={MainView} title="Pre-Recorded Messages" hideNavBar={true} />
             {/* <Scene key="register" component={Register} title="Register" /> */}
             {/* <Scene key="home" component={Home} /> */}
           </Drawer>

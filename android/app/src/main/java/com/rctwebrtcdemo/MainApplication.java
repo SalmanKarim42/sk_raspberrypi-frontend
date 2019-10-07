@@ -3,6 +3,8 @@ package com.rctwebrtcdemo;
 import android.app.Application;
 
 import com.facebook.react.ReactApplication;
+import com.zmxv.RNSound.RNSoundPackage;
+import com.rnim.rn.audio.ReactNativeAudioPackage;
 import io.invertase.firebase.RNFirebasePackage;
 import io.invertase.firebase.messaging.RNFirebaseMessagingPackage;   
 import io.invertase.firebase.notifications.RNFirebaseNotificationsPackage;
@@ -32,6 +34,8 @@ public class MainApplication extends Application implements ReactApplication {
     protected List<ReactPackage> getPackages() {
       return Arrays.<ReactPackage>asList(
           new MainReactPackage(),
+            new RNSoundPackage(),
+          new ReactNativeAudioPackage(),
           new RNFirebasePackage(),
           new WebRTCModulePackage(),
           new RNFirebaseMessagingPackage(),
