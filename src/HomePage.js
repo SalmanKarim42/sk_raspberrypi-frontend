@@ -33,6 +33,10 @@ class HomePage extends Component {
             // console.log(user, 'user');
             if (user) {
                 if (Platform.OS === 'android') {
+                    // Build a channel
+                    const channel = new firebase.notifications.Android.Channel('fcm_default_channel', 'fcm_default channel', firebase.notifications.Android.Importance.High)
+                    firebase.notifications().android.createChannel(channel);
+                    // console.log(idch)
                     this.setupNotification();
                 }
             }
@@ -50,49 +54,84 @@ class HomePage extends Component {
         // console.log('111backpress')
         return true;
     }
+    setTokenSentToServer = async (is, fcmToken) => {
+        if (is) {
+            console.log('FCM Token: ', fcmToken);
+            this.users.child(this.state.user.uid).update({ fcmToken }).then(e => {
+                console.log('success', e)
+            }).catch(err => {
+                console.log('error', err)
+            })
+            this.devices.child(this.state.user.raspi_id).update({ fcmToken }).then(e => {
+                console.log('success', e)
+            }).catch(err => {
+                console.log('error', err)
+            })
+            const enabled = await firebase.messaging().hasPermission();
+            if (enabled) {
+                console.log('FCM messaging has permission:' + enabled)
+            } else {
+                try {
+                    await firebase.messaging().requestPermission();
+                    console.log('FCM permission granted')
+                } catch (error) {
+                    console.log('FCM Permission Error', error);
+                }
+            }
+            this.notificationOpenedListener = firebase.notifications().onNotificationOpened((notificationOpen: NotificationOpen) => {
+                // Get the action triggered by the notification being opened
+                const action = notificationOpen.action;
+                // Get information about the notification that was opened
+                const notification: Notification = notificationOpen.notification;
+                console.log(action, notification);
+            });
+            this.notificationDisplayedListener = firebase.notifications().onNotificationDisplayed((notification: Notification) => {
+                // Process your notification as required
+                // ANDROID: Remote notifications do not contain the channel ID. You will have to specify this manually if you'd like to re-display the notification.
+                // notification.android.setChannelId('fcm_default_channel').setSound('default')
+                // notification.android.setChannelId(this.channel.channelId);
+                console.log('Notification: ', notification)
+            });
+            this.notificationListener = firebase.notifications().onNotification((notification: Notification) => {
+                notification.android.setChannelId('fcm_default_channel').setSound('default')
+                console.log('Notification: ', notification)
+                // notification.android.setChannelId('test-channel');
+                firebase.notifications().displayNotification(notification);
+            });
+        } else {
+            console.log('FCM Token not available');
+        }
+    }
     setupNotification = async () => {
         try {
             const res = await firebase.messaging().requestPermission();
             const fcmToken = await firebase.messaging().getToken();
-            if (fcmToken) {
-                console.log('FCM Token: ', fcmToken);
-                this.users.child(this.state.user.uid).update({ fcmToken }).then(e => {
-                    console.log('success', e)
-                }).catch(err => {
-                    console.log('error', err)
-                })
-                this.devices.child(this.state.user.raspi_id).update({ fcmToken }).then(e => {
-                    console.log('success', e)
-                }).catch(err => {
-                    console.log('error', err)
-                })
-                const enabled = await firebase.messaging().hasPermission();
-                if (enabled) {
-                    console.log('FCM messaging has permission:' + enabled)
-                } else {
-                    try {
-                        await firebase.messaging().requestPermission();
-                        console.log('FCM permission granted')
-                    } catch (error) {
-                        console.log('FCM Permission Error', error);
-                    }
-                }
-                firebase.notifications().onNotificationDisplayed((notification: Notification) => {
-                    // Process your notification as required
-                    // ANDROID: Remote notifications do not contain the channel ID. You will have to specify this manually if you'd like to re-display the notification.
-                    console.log('Notification: ', notification)
-                    firebase.notifications().displayNotification(notification);
+            if (fcmToken) this.setTokenSentToServer(true, fcmToken);
+            // Create the channel
+            // firebase.notifications().android.createChannel(this.channel);
+            // Callback fired if Instance ID token is updated.
+            firebase.messaging().onTokenRefresh(() => {
+                firebase.messaging().getToken().then((refreshedToken) => {
+                    console.log('Token refreshed.');
+                    // Indicate that the new Instance ID token has not yet been sent to the
+                    // app server.
+                    this.setTokenSentToServer(true, refreshedToken);
+                    // Send Instance ID token to app server.
+                    // ...
+                }).catch((err) => {
+                    console.log('Unable to retrieve refreshed token ', err);
+                    showToken('Unable to retrieve refreshed token ', err);
                 });
-                this.notificationListener = firebase.notifications().onNotification((notification: Notification) => {
-                    console.log('Notification: ', notification)
-                    firebase.notifications().displayNotification(notification);
-                });
-            } else {
-                console.log('FCM Token not available');
-            }
+            });
+
         } catch (e) {
             console.log('Error initializing FCM', e);
         }
+    }
+    componentWillUnmount() {
+        this.notificationListener();
+        this.notificationDisplayedListener()
+        this.notificationOpenedListener();
     }
 
     render() {

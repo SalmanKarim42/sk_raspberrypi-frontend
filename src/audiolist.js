@@ -205,10 +205,10 @@ class MainView extends Component {
             user = JSON.parse(user);
             this.setState({ user })
             this.storage = firebase.storage().ref().child('audios');
-            this.db = firebase.database().ref('raspberry_db').child('audios').child(user.uid);
+            this.db = firebase.database().ref('raspberry_db').child('audios').child(user.raspi_id);
             console.log(user);
             self = this
-            this.listnerChildAdded = firebase.database().ref('raspberry_db').child('audios').child(user.uid).on('child_added', (snapshot) => {
+            this.listnerChildAdded = firebase.database().ref('raspberry_db').child('audios').child(user.raspi_id).on('child_added', (snapshot) => {
                 // console.log('data', snapshot.val())
                 if (snapshot.val()) {
                     this.setState({
@@ -218,7 +218,7 @@ class MainView extends Component {
             }, function (err) {
                 console.log(err, 'err')
             });
-            this.listnerChildRemoved = firebase.database().ref('raspberry_db').child('audios').child(user.uid).on('child_removed', (snapshot) => {
+            this.listnerChildRemoved = firebase.database().ref('raspberry_db').child('audios').child(user.raspi_id).on('child_removed', (snapshot) => {
                 console.log('data', snapshot.val(), snapshot.key)
                 if (snapshot.val()) {
 

@@ -3,7 +3,14 @@ import {
   StyleSheet,
   AppRegistry,
   AsyncStorage,
-  Platform
+  Platform,
+  Text,
+  ListView,
+  TouchableHighlight,
+  View,
+  TextInput,
+  YellowBox,
+  Alert
 } from "react-native";
 import {
   Router,
@@ -13,7 +20,7 @@ import {
   Actions
 } from "react-native-router-flux";
 import firebase, { Notification, RemoteMessage } from 'react-native-firebase';
-import Home from "./src/Home";
+// import Home from "./src/Home";
 import Login from "./src/Login";
 import SignUp from "./src/SignUp";
 import InnerCam from "./src/InnerCam";
@@ -23,10 +30,25 @@ import SideBar from "./src/SideBar";
 import AudioExample from "./src/RecodeList";
 import MainView from "./src/audiolist";
 
+
+import io from "socket.io-client";
+
+
+YellowBox.ignoreWarnings(['Setting a timer', 'Unrecognized WebSocket connection', 'ListView is deprecated and will be removed']);
+const url = 'https://dimitristzimikas-rctwebrtcdemo-server.glitch.me';
+const socket = io.connect(url, { transports: ["websocket"] });
+
+socket.on("disconnect", function (socketid) {
+
+  console.log("disconnect", socketid);
+});
+socket.on("connect", function (data) {
+  console.log("connect", data);
+});
+
 class RCTWebRTCDemo extends Component {
   constructor(props) {
     super(props);
-    console.log(firebase, 'new ');
 
   }
   componentDidMount() {
@@ -34,24 +56,24 @@ class RCTWebRTCDemo extends Component {
       if (user) {
         console.log('is user login ', user);
         Actions.homepage();
-        
+
       } else {
         console.log('user not login ');
       }
     })
   }
-  
+
   render() {
     return (
       <Router hideNavBar="true">
         <Scene key="root">
           <Scene initial key="login" component={Login} title="Login" hideNavBar={true} />
           <Scene key="signup" component={SignUp} title="SignUp" hideNavBar={true} />
-          <Drawer hideNavBar key="drawerMenu" contentComponent={SideBar} drawerWidth={250}  drawerPosition="left">
+          <Drawer hideNavBar key="drawerMenu" contentComponent={SideBar} drawerWidth={250} drawerPosition="left">
             <Scene initial key="homepage" component={HomePage} title="HomePage" hideNavBar={true} />
             <Scene key="innercam" component={InnerCam} title="InnerCam" hideNavBar={true} />
             <Scene key="outtercam" component={OutterCam} title="OutterCam" hideNavBar={true} />
-            <Scene key="audioList" component={AudioExample} title="Pre-Recorded Messages" hideNavBar={true} />
+            {/* <Scene key="audioList" component={AudioExample} title="Pre-Recorded Messages" hideNavBar={true} /> */}
             <Scene key="audios" component={MainView} title="Pre-Recorded Messages" hideNavBar={true} />
             {/* <Scene key="register" component={Register} title="Register" /> */}
             {/* <Scene key="home" component={Home} /> */}
@@ -102,11 +124,21 @@ const styles = StyleSheet.create({
   },
 });
 
+
+
+
+
+
+
+
 // Move to a proper place
 const handleFCMNotification = async (message: RemoteMessage) => {
   console.log('FCM OFFLINE: ', message);
   return Promise.resolve();
 }
+
+
+
 
 AppRegistry.registerComponent('RCTWebRTCDemo', () => RCTWebRTCDemo);
 
