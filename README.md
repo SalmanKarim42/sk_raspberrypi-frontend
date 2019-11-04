@@ -13,15 +13,14 @@
 - For Android, run `react-native run-android` in the directory.  
 
 ## Instructions
-- For this to work you need to create the server, go to : [RCTWebRTCDemo-server](https://github.com/DimitrisTzimikas/RCTWebRTCDemo-server) and follow the instructions.
 
-- After you create the server and deploy it with ngrok copy the link, something like that "https://a4cd7858.ngrok.io" and paste it to **RCTWebRTCDEMO/main.js** 
+- After you clone the repo 
 ```javascript
-const url = 'paste_it_here';
+cd projectName
 ```
-- It must look like than
+- then run command 
 ```javascript
-const url = 'https://a4cd7858.ngrok.io/';
+npm install
 ```
 
 # Note 
