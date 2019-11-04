@@ -1,4 +1,4 @@
-package com.rctwebrtcdemo;
+package com.edoorknocker;
 
 import android.app.Application;
 

@@ -140,6 +140,6 @@ const handleFCMNotification = async (message: RemoteMessage) => {
 
 
 
-AppRegistry.registerComponent('RCTWebRTCDemo', () => RCTWebRTCDemo);
+AppRegistry.registerComponent('Edoorknocker', () => RCTWebRTCDemo);
 
 AppRegistry.registerHeadlessTask('RNFirebaseBackgroundMessage', () => handleFCMNotification);

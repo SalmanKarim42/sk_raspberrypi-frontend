@@ -15,14 +15,6 @@
       },
       "oauth_client": [
         {
-          "client_id": "484462805083-a8kp5hma1klvn8nmd42o15ge3ittspui.apps.googleusercontent.com",
-          "client_type": 1,
-          "android_info": {
-            "package_name": "com.edoorknocker",
-            "certificate_hash": "298f6f40fabbbd24f4d46a1ab69bd97ae7b11069"
-          }
-        },
-        {
           "client_id": "484462805083-s4buhq77bpjsispnemqafuquk0lrnbrj.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
