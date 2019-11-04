@@ -18,7 +18,7 @@ import {
 import { Header, Icon, Left, Right, Footer, Container, Content } from 'native-base';
 import { Actions } from 'react-native-router-flux';
 import LinearGradient from 'react-native-linear-gradient';
-
+import CustomLoading from './Loading'
 import {
     RTCPeerConnection,
     //RTCMediaStream, /* old API */
@@ -105,9 +105,9 @@ function getLocalStream(isFront, callback) {
     );
 }
 
-const join = roomID => {
+const joinVideo = roomID => {
     console.log("join");
-    socket.emit("join", roomID,
+    socket.emit("join", roomID, 'front',
         function (socketIds) {
             console.log("join", socketIds);
             for (const i in socketIds) {
@@ -125,6 +125,18 @@ const join = roomID => {
         // }
     );
 };
+
+const join = roomID => {
+    socket.emit('changeCamera', roomID, 'back', () => {
+        console.log('awen');
+    })
+}
+socket.on('back', (videoReady) => {
+    if (videoReady) {
+        console.log('make a call');
+        joinVideo(videoReady);
+    }
+})
 
 function createPC(socketId, isOffer) {
     const pc = new RTCPeerConnection(configuration);
@@ -175,27 +187,27 @@ function createPC(socketId, isOffer) {
 
     pc.onaddstream = function (event) {
         console.log("onaddstream", event.stream);
-        Alert.alert(socketId, 'Calling you',
-            [
-                {
-                    text: 'Cancel',
-                    onPress: () => { acceptTheCall(false); console.log('Cancel Pressed') },
-                    style: 'cancel',
-                },
-                { text: 'Accept', onPress: () => { acceptTheCall(true); console.log('OK Pressed') } },
-            ])
-        acceptTheCall = (accepted) => {
-            if (accepted) {
+        // Alert.alert(socketId, 'Calling you',
+        //     [
+        //         {
+        //             text: 'Cancel',
+        //             onPress: () => { acceptTheCall(false); console.log('Cancel Pressed') },
+        //             style: 'cancel',
+        //         },
+        //         { text: 'Accept', onPress: () => { acceptTheCall(true); console.log('OK Pressed') } },
+        //     ])
+        // acceptTheCall = (accepted) => {
+        //     if (accepted) {
 
-                container.setState({ info: "One peer join!", enableHangup: true });
+        container.setState({ info: "One peer join!", enableHangup: true, isLoading: false });
 
-                const remoteList = container.state.remoteList;
-                remoteList[socketId] = event.stream.toURL();
-                container.setState({ remoteList: remoteList });
-            } else {
-                hangup(container.state.roomID);
-            }
-        }
+        const remoteList = container.state.remoteList;
+        remoteList[socketId] = event.stream.toURL();
+        container.setState({ remoteList: remoteList });
+        //     } else {
+        //         hangup(container.state.roomID);
+        //     }
+        // }
     };
     pc.onremovestream = function (event) {
         console.log("onremovestream", event.stream);
@@ -340,7 +352,8 @@ class InnerCam extends Component {
         textRoomConnected: false,
         textRoomData: [],
         textRoomValue: "",
-        enableHangup: false
+        enableHangup: false,
+        isLoading: false
     };
 
     componentDidMount() {
@@ -349,7 +362,8 @@ class InnerCam extends Component {
             if (user) {
                 user = JSON.parse(user);
                 this.setState({
-                    roomID: user.raspi_id + '_home'
+                    roomID: user.raspi_id + '_home',
+                    isLoading: true
                 })
                 initStream();
                 this._press()
@@ -358,7 +372,7 @@ class InnerCam extends Component {
         })
     }
 
-    _press = () => {
+    _press = () => {  
         // console.log("roomID", this.refs.roomID);
         // this.refs.roomID.blur();
         console.log("press", this.state.roomID);
@@ -374,6 +388,7 @@ class InnerCam extends Component {
             // </ImageBackground>
             <Container>
 
+                {this.state.isLoading ? <CustomLoading></CustomLoading> : null}
                 <Header style={{ justifyContent: 'center', alignItems: 'center', height: 84 }}>
                     <TouchableOpacity style={styles.backButton} onPress={() => Actions.pop()}>
                         <Icon style={{ fontSize: 26, color: 'white' }} name="md-arrow-round-back" type="Ionicons"></Icon>
@@ -391,11 +406,14 @@ class InnerCam extends Component {
                     {/* <View style={styles.icon_view}>
                         <Icon style={styles.icons} name="mic" type="Feather" />
                     </View> */}
-                    <TouchableOpacity onPress={() => Actions.pop()}>
-                        <View style={styles.icon_call_view}>
-                            <Icon style={styles.icons} name="phone" type="FontAwesome5" />
-                        </View>
-                    </TouchableOpacity>
+                    {
+                        this.state.enableHangup ?
+                            <TouchableOpacity onPress={() => Actions.pop()}>
+                                <View style={styles.icon_call_view}>
+                                    <Icon style={styles.icons} name="phone" type="FontAwesome5" />
+                                </View>
+                            </TouchableOpacity> : null
+                    }
                     {/* <View style={styles.icon_view}>
                         <Icon style={styles.icons} name="video" type="Feather" />
                     </View> */}

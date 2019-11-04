@@ -11,14 +11,14 @@ import {
     Platform,
     ListView,
     TouchableHighlight,
-
     TextInput,
     YellowBox,
     Alert
 } from "react-native";
 import { Header, Icon, Left, Right, Footer, Container, Content } from 'native-base';
 import { Actions } from 'react-native-router-flux';
-
+import LinearGradient from 'react-native-linear-gradient';
+import CustomLoading from './Loading'
 import {
     RTCPeerConnection,
     //RTCMediaStream, /* old API */
@@ -89,8 +89,8 @@ function getLocalStream(isFront, callback) {
             audio: true,
             video: {
                 mandatory: {
-                    minWidth: 640, // Provide your own width, height and frame rate here
-                    minHeight: 360,
+                    minWidth: '100%', // Provide your own width, height and frame rate here
+                    minHeight: 460,
                     minFrameRate: 30,
                 },
                 facingMode: isFront ? "user" : "environment",
@@ -105,9 +105,9 @@ function getLocalStream(isFront, callback) {
     );
 }
 
-const join = roomID => {
+const joinVideo = roomID => {
     console.log("join");
-    socket.emit("join", roomID,
+    socket.emit("join", roomID, 'front',
         function (socketIds) {
             console.log("join", socketIds);
             for (const i in socketIds) {
@@ -125,6 +125,18 @@ const join = roomID => {
         // }
     );
 };
+
+const join = roomID => {
+    socket.emit('changeCamera', roomID, 'front', () => {
+        console.log('awen');
+    })
+}
+socket.on('front', (videoReady) => {
+    if (videoReady) {
+        console.log('make a call');
+        joinVideo(videoReady);
+    }
+})
 
 function createPC(socketId, isOffer) {
     const pc = new RTCPeerConnection(configuration);
@@ -175,27 +187,27 @@ function createPC(socketId, isOffer) {
 
     pc.onaddstream = function (event) {
         console.log("onaddstream", event.stream);
-        Alert.alert(socketId, 'Calling you',
-            [
-                {
-                    text: 'Cancel',
-                    onPress: () => { acceptTheCall(false); console.log('Cancel Pressed') },
-                    style: 'cancel',
-                },
-                { text: 'Accept', onPress: () => { acceptTheCall(true); console.log('OK Pressed') } },
-            ])
-        acceptTheCall = (accepted) => {
-            if (accepted) {
+        // Alert.alert(socketId, 'Calling you',
+        //     [
+        //         {
+        //             text: 'Cancel',
+        //             onPress: () => { acceptTheCall(false); console.log('Cancel Pressed') },
+        //             style: 'cancel',
+        //         },
+        //         { text: 'Accept', onPress: () => { acceptTheCall(true); console.log('OK Pressed') } },
+        //     ])
+        // acceptTheCall = (accepted) => {
+        //     if (accepted) {
 
-                container.setState({ info: "One peer join!", enableHangup: true });
+        container.setState({ info: "One peer join!", enableHangup: true, isLoading: false });
 
-                const remoteList = container.state.remoteList;
-                remoteList[socketId] = event.stream.toURL();
-                container.setState({ remoteList: remoteList });
-            } else {
-                hangup(container.state.roomID);
-            }
-        }
+        const remoteList = container.state.remoteList;
+        remoteList[socketId] = event.stream.toURL();
+        container.setState({ remoteList: remoteList });
+        //     } else {
+        //         hangup(container.state.roomID);
+        //     }
+        // }
     };
     pc.onremovestream = function (event) {
         console.log("onremovestream", event.stream);
@@ -232,7 +244,6 @@ function createPC(socketId, isOffer) {
 
     return pc;
 }
-
 function hangup(roomID) {
     socket.emit('hangup', roomID);
     // join(roomID);
@@ -334,14 +345,15 @@ class OutterCam extends Component {
     state = {
         info: "Initializing",
         status: "init",
-        roomID: "raspberrypi",
+        roomID: "",
         isFront: true,
         selfViewSrc: null,
         remoteList: {},
         textRoomConnected: false,
         textRoomData: [],
         textRoomValue: "",
-        enableHangup: false
+        enableHangup: false,
+        isLoading: false
     };
 
     componentDidMount() {
@@ -350,7 +362,8 @@ class OutterCam extends Component {
             if (user) {
                 user = JSON.parse(user);
                 this.setState({
-                    roomID: user.raspi_id + '_door'
+                    roomID: user.raspi_id + '_door',
+                    isLoading: true,
                 })
                 initStream();
                 this._press()
@@ -374,12 +387,12 @@ class OutterCam extends Component {
             // <ImageBackground source={require('./components/video.jpg')} style={{ width: '100%', height: '100%', justifyContent: 'space-between' }}>
             // </ImageBackground>
             <Container>
-
+                {this.state.isLoading ? <CustomLoading></CustomLoading> : null}
                 <Header style={{ justifyContent: 'center', alignItems: 'center', height: 84 }}>
                     <TouchableOpacity style={styles.backButton} onPress={() => Actions.pop()}>
                         <Icon style={{ fontSize: 26, color: 'white' }} name="md-arrow-round-back" type="Ionicons"></Icon>
                     </TouchableOpacity>
-                    <Text style={{ color: '#fff', fontSize: 25, fontWeight: '500', textAlign: 'center' }}>Inner Camera</Text>
+                    <Text style={{ color: '#fff', fontSize: 25, fontWeight: '500', textAlign: 'center' }}>Outter Camera</Text>
                 </Header>
                 <Content />
                 {mapHash(this.state.remoteList, function (remote, index) {
@@ -388,16 +401,19 @@ class OutterCam extends Component {
                     );
                 })}
 
-
                 <Footer style={styles.footer_video}>
                     {/* <View style={styles.icon_view}>
                         <Icon style={styles.icons} name="mic" type="Feather" />
                     </View> */}
-                    <TouchableOpacity onPress={() => Actions.pop()}>
-                        <View style={styles.icon_call_view}>
-                            <Icon style={styles.icons} name="phone" type="FontAwesome5" />
-                        </View>
-                    </TouchableOpacity>
+
+                    {
+                        this.state.enableHangup ?
+                            <TouchableOpacity onPress={() => Actions.pop()}>
+                                <View style={styles.icon_call_view}>
+                                    <Icon style={styles.icons} name="phone" type="FontAwesome5" />
+                                </View>
+                            </TouchableOpacity> : null
+                    }
                     {/* <View style={styles.icon_view}>
                         <Icon style={styles.icons} name="video" type="Feather" />
                     </View> */}
@@ -448,9 +464,33 @@ const styles = StyleSheet.create({
         height: 100,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        // backgroundColor: 'rgba(0, 0, 0, 0.3)',
         // borderTopRightRadius: 40,
         // borderTopLeftRadius: 40,
+    },
+    header: {
+        // backgroundColor: '#F18200',
+        height: '10%',
+        width: '100%',
+        borderBottomLeftRadius: 30,
+        borderBottomRightRadius: 30,
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 3,
+
+    },
+    selfView: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        // height:'100%'
+    },
+    remoteView: {
+        width: '100%',
+        height: '100%',
     },
 
 });
