@@ -72,7 +72,7 @@ class RCTWebRTCDemo extends Component {
           <Drawer hideNavBar key="drawerMenu" contentComponent={SideBar} drawerWidth={250} drawerPosition="left">
             <Scene initial key="homepage" component={HomePage} title="HomePage" hideNavBar={true} />
             <Scene key="innercam" component={InnerCam} title="InnerCam" hideNavBar={true} />
-            <Scene key="outtercam" component={OutterCam} title="OutterCam" hideNavBar={true} />
+            <Scene key="outtercam" component={OutterCam} title="OuterCam" hideNavBar={true} />
             {/* <Scene key="audioList" component={AudioExample} title="Pre-Recorded Messages" hideNavBar={true} /> */}
             <Scene key="audios" component={MainView} title="Pre-Recorded Messages" hideNavBar={true} />
             {/* <Scene key="register" component={Register} title="Register" /> */}

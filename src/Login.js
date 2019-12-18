@@ -27,7 +27,7 @@ class Login extends Component {
 
     }
     componentDidMount() {
-        firebase.auth().onAuthStateChanged(user => {
+        this.firebaseOnAuth = firebase.auth().onAuthStateChanged(user => {
             console.log('firebase suer ', user);
             if (user) {
                 let db = firebase.database().ref('raspberry_db/');
@@ -39,6 +39,9 @@ class Login extends Component {
                 });
             }
         })
+    }
+    componentWillUnmount() {
+        if (this.firebaseOnAuth) this.firebaseOnAuth();
     }
     _emptyFields = () => {
         this.setState({

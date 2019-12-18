@@ -13,41 +13,53 @@ import { Item, Input, Button, Form, Header, Container, Icon, Left } from 'native
 import { Actions } from 'react-native-router-flux';
 import LinearGradient from 'react-native-linear-gradient';
 import firebase from "react-native-firebase";
+import CustomLoading from "./Loading";
 // var img = require('./components/raspi.jpg');
 class HomePage extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            user: null
+            user: null,
+            isLoading: false
         }
 
     }
 
     componentDidMount() {
         this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
-        AsyncStorage.getItem('user').then(user => {
-            user = JSON.parse(user);
-            this.setState({
-                user
-            })
-            console.log(user, 'user');
+        let self = this;
+        self.setState({ isLoading: true });
+        this.firebaseOnAuth = firebase.auth().onAuthStateChanged(user => {
+            // console.log('firebase  ', user);
+            // alert('firebase ' + JSON.stringify(user));
             if (user) {
+                // let db = firebase.database().ref('raspberry_db/');
+                // db.child('users').child(user.uid).once('value', snapshot => {
+                //     console.log(snapshot.val(), 'snapshot ');
+                self.setState({
+                    user: user._user,
+                    isLoading: false
+                })
+                // alert('user' + JSON.stringify(user));
+                // console.log(snapshot.val(), 'user');
+                // if (user) {
                 if (Platform.OS === 'android') {
                     // Build a channel
                     const channel = new firebase.notifications.Android.Channel('fcm_default_channel', 'fcm_default channel', firebase.notifications.Android.Importance.High)
                     firebase.notifications().android.createChannel(channel);
                     // console.log(idch)
-                    this.setupNotification();
+                    self.setupNotification();
                 }
+                // }
+                // });
+            } else {
+                Actions.popTo('login');
             }
         })
         this.users = firebase.database().ref('raspberry_db/users');
         this.devices = firebase.database().ref('raspberry_db/devices');
     }
 
-    componentWillUnmount() {
-        this.backHandler.remove()
-    }
 
     handleBackPress = () => {
         // this.goBack(); // works best when the goBack is async
@@ -129,14 +141,19 @@ class HomePage extends Component {
         }
     }
     componentWillUnmount() {
+        if (this.firebaseOnAuth) this.firebaseOnAuth();
+        this.backHandler.remove()
         this.notificationListener();
         this.notificationDisplayedListener()
         this.notificationOpenedListener();
+        // this.firebaseOnAuth();
     }
 
     render() {
         return (
             <Container>
+                {this.state.isLoading ? <CustomLoading /> : null}
+
                 <LinearGradient colors={['#F06101', '#F06C00', '#F18700']} style={styles.header}>
                     <TouchableOpacity style={styles.backButton} onPress={() => Actions.drawerOpen()}>
                         <Icon style={{ fontSize: 26, color: 'white' }} name="md-menu" type="Ionicons"></Icon>

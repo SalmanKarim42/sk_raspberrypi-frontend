@@ -12,7 +12,7 @@ const routes = [
 ];
 function signOut() {
     firebase.auth().signOut();
-    Actions.popTo('login');
+    Actions.login();
 }
 export default class SideBar extends React.Component {
     componentDidMount() {
