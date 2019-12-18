@@ -28,8 +28,15 @@ class Login extends Component {
     }
     componentDidMount() {
         firebase.auth().onAuthStateChanged(user => {
+            console.log('firebase suer ', user);
             if (user) {
-                Actions.homepage();
+                let db = firebase.database().ref('raspberry_db/');
+                db.child('users').child(user.uid).once('value', snapshot => {
+                    console.log(snapshot.val(), 'snapshot ');
+                    AsyncStorage.setItem('user', JSON.stringify(snapshot.val())).then(_ => {
+                        Actions.homepage();
+                    })
+                });
             }
         })
     }
@@ -54,7 +61,8 @@ class Login extends Component {
                     self._emptyFields();
                     let db = firebase.database().ref('raspberry_db/');
                     db.child('users').child(res.user.uid).once('value', snapshot => {
-                        AsyncStorage.setItem('user', JSON.stringify(snapshot.val())).then(_=>{
+                        console.log(snapshot.val(), 'snapshot ');
+                        AsyncStorage.setItem('user', JSON.stringify(snapshot.val())).then(_ => {
                             Actions.homepage();
                         })
                     },
@@ -118,11 +126,11 @@ class Login extends Component {
                         <View style={styles.container}>
                             <Item style={styles.item}>
                                 <Icon style={styles.input_icon} name="email" type="MaterialIcons" />
-                                <Input value={this.state.email} style={styles.item_input} placeholderTextColor="gray" placeholder='Email' onChangeText={email => this.setState({ email })} />
+                                <Input autoCapitalize='none' value={this.state.email} style={styles.item_input} placeholderTextColor="gray" placeholder='Email' onChangeText={email => this.setState({ email })} />
                             </Item>
                             <Item style={styles.item}>
                                 <Icon style={styles.input_icon} name='md-key' type="Ionicons" />
-                                <Input style={styles.item_input} value={this.state.password} placeholderTextColor="gray" placeholder='Password' onChangeText={password => this.setState({ password })} />
+                                <Input autoCapitalize="none" secureTextEntry={true} style={styles.item_input} value={this.state.password} placeholderTextColor="gray" placeholder='Password' onChangeText={password => this.setState({ password })} />
                             </Item>
                             {/* <View style={styles.forget_view}>
                         <Text styles={{ color: 'gray'  }} >Forgot Password ?</Text>

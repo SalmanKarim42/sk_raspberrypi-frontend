@@ -13,7 +13,8 @@ import {
     TouchableHighlight,
     TextInput,
     YellowBox,
-    Alert
+    Alert,
+    BackHandler
 } from "react-native";
 import { Header, Icon, Left, Right, Footer, Container, Content } from 'native-base';
 import { Actions } from 'react-native-router-flux';
@@ -357,6 +358,7 @@ class InnerCam extends Component {
     };
 
     componentDidMount() {
+        this.backHandler = BackHandler.addEventListener('hardwareBackPress', this.handleBackPress);
         container = this;
         AsyncStorage.getItem('user').then(user => {
             if (user) {
@@ -372,7 +374,7 @@ class InnerCam extends Component {
         })
     }
 
-    _press = () => {  
+    _press = () => {
         // console.log("roomID", this.refs.roomID);
         // this.refs.roomID.blur();
         console.log("press", this.state.roomID);
@@ -380,7 +382,14 @@ class InnerCam extends Component {
         join(this.state.roomID);
     };
     componentWillUnmount() {
+        this.backHandler.remove()
+    }
+    handleBackPress = () => {
         hangup(this.state.roomID);
+        // this.goBack(); // works best when the goBack is async
+        // console.log('111backpress')
+        Actions.pop()
+        return true;
     }
     render() {
         return (
@@ -390,7 +399,7 @@ class InnerCam extends Component {
 
                 {this.state.isLoading ? <CustomLoading></CustomLoading> : null}
                 <Header style={{ justifyContent: 'center', alignItems: 'center', height: 84 }}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => Actions.pop()}>
+                    <TouchableOpacity style={styles.backButton} onPress={() => { hangup(this.state.roomID); Actions.pop() }}>
                         <Icon style={{ fontSize: 26, color: 'white' }} name="md-arrow-round-back" type="Ionicons"></Icon>
                     </TouchableOpacity>
                     <Text style={{ color: '#fff', fontSize: 25, fontWeight: '500', textAlign: 'center' }}>Inner Camera</Text>
@@ -408,7 +417,7 @@ class InnerCam extends Component {
                     </View> */}
                     {
                         this.state.enableHangup ?
-                            <TouchableOpacity onPress={() => Actions.pop()}>
+                            <TouchableOpacity onPress={() => { hangup(this.state.roomID); Actions.pop() }}>
                                 <View style={styles.icon_call_view}>
                                     <Icon style={styles.icons} name="phone" type="FontAwesome5" />
                                 </View>

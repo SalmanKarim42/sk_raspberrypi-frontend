@@ -28,7 +28,13 @@ class SignUp extends Component {
     componentWillMount() {
         firebase.auth().onAuthStateChanged(user => {
             if (user) {
-                Actions.homepage();
+                let db = firebase.database().ref('raspberry_db/');
+                db.child('users').child(user.uid).once('value', snapshot => {
+                    console.log(snapshot.val(), 'snapshot ');
+                    AsyncStorage.setItem('user', JSON.stringify(snapshot.val())).then(_ => {
+                        Actions.homepage();
+                    })
+                });
             }
         })
     }
@@ -164,11 +170,11 @@ class SignUp extends Component {
                         </Item>
                         <Item style={styles.item}>
                             <Icon style={styles.input_icon} name="email" type="MaterialIcons" />
-                            <Input style={styles.item_input} value={this.state.email} placeholderTextColor="gray" placeholder='Email' onChangeText={(email) => this.setState({ email })} />
+                            <Input autoCapitalize='none' style={styles.item_input} value={this.state.email} placeholderTextColor="gray" placeholder='Email' onChangeText={(email) => this.setState({ email })} />
                         </Item>
                         <Item style={styles.item}>
                             <Icon style={styles.input_icon} name='md-key' type="Ionicons" />
-                            <Input style={styles.item_input} value={this.state.password} placeholderTextColor="gray" placeholder='Password' onChangeText={(password) => this.setState({ password })} />
+                            <Input autoCapitalize='none' secureTextEntry={true} style={styles.item_input} value={this.state.password} placeholderTextColor="gray" placeholder='Password' onChangeText={(password) => this.setState({ password })} />
                         </Item>
                         {/* <View style={styles.forget_view}>
                         <Text styles={{ color: 'gray'  }} >Forgot Password ?</Text>

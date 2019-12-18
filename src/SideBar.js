@@ -5,7 +5,7 @@ import { Actions } from "react-native-router-flux";
 import firebase from "react-native-firebase";
 const routes = [
     { key: "1", link: () => Actions.innercam(), title: " Inner Camera", icon: 'video-camera', type: 'FontAwesome' },
-    { key: "2", link: () => Actions.outtercam(), title: " Outter Camera", icon: 'video-camera', type: 'Entypo' },
+    { key: "2", link: () => Actions.outtercam(), title: " Outer Camera", icon: 'video-camera', type: 'Entypo' },
     // { key: "3", link: () => Actions.audioList(), title: " Messages", icon: 'md-recording', type: 'Ionicons' },
     { key: "4", link: () => Actions.audios(), title: " Audios", icon: 'md-recording', type: 'Ionicons' },
     { key: "5", link: () => signOut(), title: " SignOut", icon: 'log-out', type: 'Entypo' },

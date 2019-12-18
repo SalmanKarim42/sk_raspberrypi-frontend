@@ -30,7 +30,7 @@ class HomePage extends Component {
             this.setState({
                 user
             })
-            // console.log(user, 'user');
+            console.log(user, 'user');
             if (user) {
                 if (Platform.OS === 'android') {
                     // Build a channel
@@ -153,7 +153,7 @@ class HomePage extends Component {
                     <View style={styles.bttn_view}  >
                         <Button style={styles.login_bttn} onPress={() => Actions.outtercam()} >
                             <Icon name='video-camera' type='Entypo'></Icon>
-                            <Text style={styles.login_bttn_text}>Outter Camera</Text>
+                            <Text style={styles.login_bttn_text}>Outer Camera</Text>
                         </Button>
                     </View>
 

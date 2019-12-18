@@ -205,8 +205,8 @@ class MainView extends Component {
             user = JSON.parse(user);
             this.setState({ user })
             this.storage = firebase.storage().ref().child('audios');
-            this.db = firebase.database().ref('raspberry_db').child('audios').child(user.raspi_id);
             console.log(user);
+            this.db = firebase.database().ref('raspberry_db').child('audios').child(user.raspi_id);
             self = this
             this.listnerChildAdded = firebase.database().ref('raspberry_db').child('audios').child(user.raspi_id).on('child_added', (snapshot) => {
                 // console.log('data', snapshot.val())
